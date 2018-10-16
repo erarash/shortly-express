@@ -3,7 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var session = require('express-session');
 var bodyParser = require('body-parser');
-
+const bcrypt = require('bcrypt');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -46,6 +46,12 @@ function(req, res) {
   } else {
     res.redirect('index')
   }
+});
+
+app.get('/signout', 
+  function(req, res) {
+    req.session.destroy();
+    res.redirect('/login');
 });
 
 app.get('/links', 
@@ -104,7 +110,7 @@ app.post('/login', function(req,res){
   new User({username: username} ).fetch().then(function(result){
     if (!result) {
       res.redirect('/login');
-    } else if (result.attributes.username === username && result.attributes.password === password){
+    } else if (result.attributes.username === username && bcrypt.compareSync(password, result.attributes.password)){
       req.session.loggedIn = true;
       res.redirect('/');
     } else {
@@ -120,12 +126,18 @@ app.get('/signup', function(req, res){
 app.post('/signup', function(req,res){
   var username = req.body.username;
   var password = req.body.password;
-  Users.create({username: username, password: password})
-    .then(() =>  {
-      req.session.loggedIn = true;
-      res.redirect('/')
-    })
-    .catch((err) => console.log(err));
+  bcrypt.hash(password, 10, function(err, hash) {
+    if (err) {
+      console.log(err)
+    } else {
+      Users.create({username: username, password: hash})
+      .then(() =>  {
+        req.session.loggedIn = true;
+        res.redirect('/')
+      })
+      .catch((err) => console.log(err));
+    }
+  });
 })
 
 /************************************************************/

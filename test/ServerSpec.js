@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var request = require('request');
+const bcrypt = require('bcrypt');
 
 var app = require('../shortly.js');
 var db = require('../app/config');
@@ -80,7 +81,7 @@ describe('', function() {
       // create a user that we can then log-in with
       new User({
         'username': 'Phillip',
-        'password': 'Phillip'
+        'password': bcrypt.hashSync('Phillip', 10)
       }).save().then(function() {
         var options = {
           'method': 'POST',
@@ -306,7 +307,7 @@ describe('', function() {
     beforeEach(function(done) {
       new User({
         'username': 'Phillip',
-        'password': 'Phillip'
+        'password': bcrypt.hashSync('Phillip', 10)
       }).save().then(function() {
         done();
       });
